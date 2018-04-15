@@ -48,9 +48,9 @@ public class AppController implements Initializable {
 
     private String crcType;
     private Hamming hamming;
-    private String oryginalData;
+    private String originalData;
     private int cutBytes = 0;
-    Checksum checksum;
+    private Checksum checksum;
 
     @SuppressWarnings("unchecked")
     @Override
@@ -111,7 +111,7 @@ public class AppController implements Initializable {
     }
 
     private void countCrc(String input) {
-        byte inputBytes[] = input.getBytes();
+        byte[] inputBytes = input.getBytes();
         selectCRCType();
         Long checksumValue = getChecksumValueFromInput(inputBytes);
         displayChecksumAsBytesAndDecimal(checksumValue);
@@ -123,10 +123,6 @@ public class AppController implements Initializable {
 
         checksum.reset();
         checksum.update(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes));
-    }
-
-    private byte[] getSentChecksum(byte[] dataAndChecksum) {
-        return Arrays.copyOfRange(dataAndChecksum, dataAndChecksum.length - (8 - cutBytes), dataAndChecksum.length);
     }
 
     private void selectCRCType() {
@@ -143,12 +139,14 @@ public class AppController implements Initializable {
                 checksum = new CRC8(0x9c, (short) 0xff);
                 cutBytes = 7;
                 break;
+            default:
+                throw new IllegalStateException("Unknown CRC type!");
         }
     }
 
     private void displayDataAndChecksum(byte[] dataAndChecksum) {
         dataAndChecksumLabel.setText(stringFromByteArray(dataAndChecksum));
-        System.out.println("checksum " + Arrays.toString(dataAndChecksum));
+        System.out.println("Checksum " + Arrays.toString(dataAndChecksum));
     }
 
     private byte[] addChecksumBytesToTheEndOfInputBytes(byte[] inputBytes, byte[] checksumBytes) {
@@ -169,18 +167,18 @@ public class AppController implements Initializable {
     }
 
     private String stringFromByteArray(byte[] bytes) {
-        String s1 = "";
+        StringBuilder s1 = new StringBuilder();
         for (byte bit : bytes) {
-            s1 += String.format("%8s", Integer.toBinaryString(bit & 0xFF)).replace(' ', '0');
+            s1.append(String.format("%8s", Integer.toBinaryString(bit & 0xFF)).replace(' ', '0'));
         }
-        return s1;
+        return s1.toString();
     }
 
     private void doHamming(String data) {
-        System.out.println("Before hamming: " + data);
+        System.out.println("Data before hamming: " + data);
         hamming = new Hamming();
         hamming.setData(data);
-        oryginalData = data;
+        originalData = data;
 
         int[] encoded = hamming.encode();
 
@@ -197,9 +195,9 @@ public class AppController implements Initializable {
             System.out.println("Algorytm hamminga nie odnalazl bledow");
         }
 
-        System.out.println("Coded by ham: " + Arrays.toString(encoded));
-        System.out.println("Decoded by ham: " + Arrays.toString(decoded));
-        System.out.println("docoded checsum: " + Arrays.toString(hammingToBytes(decoded)));
+        System.out.println("Coded by hamming: " + Arrays.toString(encoded));
+        System.out.println("Decoded by hamming: " + Arrays.toString(decoded));
+        System.out.println("Decoded checksum: " + Arrays.toString(hammingToBytes(decoded)));
     }
 
     private void displayTextBeforeHamming(int[] decoded) {
@@ -219,7 +217,7 @@ public class AppController implements Initializable {
     }
 
     private void hammingTest(String errors) {
-        hamming.setData(oryginalData);
+        hamming.setData(originalData);
         hamming.encode();
         hamming.interfereCodeWithRandomErrors(Integer.parseInt(errors));
         int[] code = hamming.decode();
@@ -261,13 +259,12 @@ public class AppController implements Initializable {
             isEqual.setText("Nie");
 
 
-
     }
 
     private byte[] hammingToBytes(int[] encoded) {
-        String byteString = "";
-        for (int i = 0; i < encoded.length; i++) {
-            byteString += encoded[i];
+        StringBuilder byteString = new StringBuilder();
+        for (int encodedBit : encoded) {
+            byteString.append(encodedBit);
         }
 
         byte[] bytesArray = new byte[byteString.length() / 8];
@@ -287,8 +284,8 @@ public class AppController implements Initializable {
         Random random = new Random();
         StringBuilder buffer = new StringBuilder(targetStringLength);
         for (int i = 0; i < targetStringLength; i++) {
-            int randomLimitedInt = leftLimit + (int)
-                    (random.nextFloat() * (rightLimit - leftLimit + 1));
+            int randomLimitedInt = leftLimit +
+                    (random.nextInt() * (rightLimit - leftLimit + 1));
             buffer.append((char) randomLimitedInt);
         }
         return buffer.toString();
