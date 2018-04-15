@@ -1,19 +1,20 @@
 package app;
 
 public class Hamming extends CodeBase {
+
+    private static int CORRECT = 0;
+    private static int INCORRECT = 1;
+    private static int UNCERTAIN = 2;
+    private static int CORRECT_REDUNDANT = 3;
+    private static int INCORRECT_REDUNDANT = 4;
+    private static int UNCERTAIN_REDUNDANT = 5;
+
     @Override
     int[] encode() {
         int dataLength = data.length;
         int i = 0, redundancy = 0, sum = 0;
 
-        while (i < dataLength) { // liczenie długości kodu
-            if (Math.pow(2, redundancy) - 1 == sum)
-                redundancy++;    // potęga 2 - bit redundantny
-            else
-                i++;// bit danych
-
-            sum++;
-        }
+        sum = computeHammingCodeLength(dataLength, i, redundancy, sum);
 
         code = new int[sum];
         bitTypes = new int[sum];
@@ -22,9 +23,12 @@ public class Hamming extends CodeBase {
         redundancy = 0;
         i = 0;
         sum = 0;
-        while (i < dataLength) { // przepisz dane i wylicz bity kontrolne
-            if (Math.pow(2, redundancy) - 1 == sum) redundancy++;
-            else {
+
+        // wylicza bity kontrolne
+        while (i < dataLength) {
+            if (Math.pow(2, redundancy) - 1 == sum) {
+                redundancy++;
+            } else {
                 code[sum] = data[i];
                 if (data[i] == 1)
                     mask ^= sum + 1;
@@ -33,8 +37,15 @@ public class Hamming extends CodeBase {
             sum++;
         }
 
-        redundancy = 0;        // tutaj nadmiar pełni też rolę numeru bitu w masce
-        for (i = 0; i < sum; i++) {    // zapisz bity kontrolne
+        redundancy = 0;
+        saveControlBytes(redundancy, sum, mask);
+
+        return code;
+    }
+
+    private void saveControlBytes(int redundancy, int sum, long mask) {
+        int i;
+        for (i = 0; i < sum; i++) {
             if (Math.pow(2, redundancy) - 1 == i) {
                 if ((mask & ((long) 1 << redundancy)) == 0)
                     code[i] = 0;
@@ -43,84 +54,108 @@ public class Hamming extends CodeBase {
                 redundancy++;
             }
         }
+    }
 
-        return code;
+    private int computeHammingCodeLength(int dataLength, int i, int redundancy, int sum) {
+        while (i < dataLength) {
+            if (Math.pow(2, redundancy) - 1 == sum)
+                redundancy++;    // potęga 2 - bit redundantny
+            else
+                i++;// bit danych
+
+            sum++;
+        }
+
+        return sum;
     }
 
     @Override
     int[] decode() {
-        int n = code.length;
-        int d = 0;
-        int nadmiar = 0;
-        for (int i = 0; i < n; i++)        // liczenie długości danych
-        {
-            if (Math.pow(2, nadmiar) - 1 != i) d++;
-            else nadmiar++;
-        }
+        int codedLength = code.length;
+        int originalLength = 0;
+        int redundancy = 0;
 
-        data = new int[d];
-        d = 0;
-        nadmiar = 0;
+        originalLength = computeOriginalDataLength(codedLength, originalLength, redundancy);
 
-        for (int i = 0; i < n; i++)        // przepisanie danych
-        {
-            if (Math.pow(2, nadmiar) - 1 != i)    // bit danych
-            {
-                data[d] = code[i];
-                d++;
-            } else nadmiar++;
-        }
+        data = new int[originalLength];
+        originalLength = 0;
+        redundancy = 0;
+
+        getOriginalData(codedLength, originalLength, redundancy);
 
         return data;
     }
 
+    private void getOriginalData(int codeLength, int originalLength, int redundancy) {
+        for (int i = 0; i < codeLength; i++) {
+            if (Math.pow(2, redundancy) - 1 != i) {
+                data[originalLength] = code[i];
+                originalLength++;
+            } else
+                redundancy++;
+        }
+    }
+
+    private int computeOriginalDataLength(int codeLength, int originalLength, int redundancy) {
+        for (int i = 0; i < codeLength; i++) {
+            if (Math.pow(2, redundancy) - 1 != i)
+                originalLength++;
+            else
+                redundancy++;
+        }
+        return originalLength;
+    }
+
     @Override
     void fixCorruptedBitString() {
-        int n = code.length;
-        int d = 0;
-        int nadmiar = 0;
-        for (int i = 0; i < n; i++)        // liczenie długości danych
-        {
-            if (Math.pow(2, nadmiar) - 1 != i) d++;
-            else nadmiar++;
-        }
+        int codedLength = code.length;
+        int originalLength = 0;
+        int redundancy = 0;
 
-        data = new int[d];
+        originalLength = computeOriginalDataLength(codedLength, originalLength, redundancy);
 
-        int maska = 0;
-        d = 0;
-        nadmiar = 0;
+        data = new int[originalLength];
 
-        for (int i = 0; i < n; i++) {
+        int mask = 0;
+        originalLength = 0;
+        redundancy = 0;
+
+        for (int i = 0; i < codedLength; i++) {
             // kontrola poprawności
-            if (code[i] == 1) maska ^= i + 1;
+            if (code[i] == INCORRECT)
+                mask ^= i + 1;
 
             // określanie typu bitów
-            if (Math.pow(2, nadmiar) - 1 != i)        // bit danych
-            {
-                d++;
-                bitTypes[i] = 0;            // poprawny (jak na razie) bit danych
+            if (Math.pow(2, redundancy) - 1 != i) {
+                originalLength++;
+                bitTypes[i] = CORRECT;
             } else {
-                bitTypes[i] = 3;                // poprawny (jak na razie) bit redundantny
-                nadmiar++;
+                bitTypes[i] = CORRECT_REDUNDANT;
+                redundancy++;
             }
         }
 
-        if (maska != 0)                    // wykryto błąd
-        {
+        if (errorWasDetected(mask)) {
             errors++;
-            int numer = maska - 1;            // numeracja bitów od 1, tablicy - od 0
+            int number = mask - 1;            // numeracja bitów od 1, tablicy - od 0
 
-            errorPosition = numer;
+            errorPosition = number;
 
-            if (numer < code.length) {
-                if (bitTypes[numer] == 0) bitTypes[numer] = 1;    // korygujemy bit danych
-                else if (bitTypes[numer] == 3) bitTypes[numer] = 4;    // korygujemy bit redundantny
+            if (number < code.length) {
+                if (bitTypes[number] == CORRECT)
+                    bitTypes[number] = INCORRECT;              // korygujemy bit danych
+                else if (bitTypes[number] == CORRECT_REDUNDANT)
+                    bitTypes[number] = INCORRECT_REDUNDANT;    // korygujemy bit redundantny
 
-                if (code[numer] == 1) code[numer] = 0;
-                else code[numer] = 1;
+                if (code[number] == INCORRECT)
+                    code[number] = CORRECT;
+                else code[number] = INCORRECT;
             }
         }
+    }
+
+    private boolean errorWasDetected(int mask) {
+        return mask != 0;
     }
 }
 
