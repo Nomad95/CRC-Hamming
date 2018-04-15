@@ -2,7 +2,15 @@ package app;
 
 import java.util.Random;
 
-abstract class CodeBase {
+abstract class AbstractErrorDetectionAlgorithm {
+
+    protected static int CORRECT = 0;
+    protected static int INCORRECT = 1;
+    protected static int UNCERTAIN = 2;
+    protected static int CORRECT_REDUNDANT = 3;
+    protected static int INCORRECT_REDUNDANT = 4;
+    protected static int UNCERTAIN_REDUNDANT = 5;
+
     protected int[] data;
     protected int[] code;
     protected int[] bitTypes;    // 0 - poprawny bit danych, 1 - przekłamany bit danych, 2 - niepewny bit danych, 3 - poprawny bit redundantny, 4 - przekłamany bit redundantny, 5 - niepewny bit redundantny

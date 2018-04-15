@@ -1,13 +1,6 @@
 package app;
 
-public class Hamming extends CodeBase {
-
-    private static int CORRECT = 0;
-    private static int INCORRECT = 1;
-    private static int UNCERTAIN = 2;
-    private static int CORRECT_REDUNDANT = 3;
-    private static int INCORRECT_REDUNDANT = 4;
-    private static int UNCERTAIN_REDUNDANT = 5;
+public class Hamming extends AbstractErrorDetectionAlgorithm {
 
     @Override
     int[] encode() {
