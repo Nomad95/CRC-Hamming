@@ -2,11 +2,7 @@ package app;
 
 import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -16,10 +12,7 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 
 public class AppController implements Initializable {
 
@@ -47,6 +40,8 @@ public class AppController implements Initializable {
     private Label isEqual;
     @FXML
     private Label errorPoss;
+    @FXML
+    private Slider generatorSlider;
 
     private String crcType;
     private Hamming hamming;
@@ -285,5 +280,24 @@ public class AppController implements Initializable {
             bytesArray[i / 8] = (byte) val;
         }
         return bytesArray;
+    }
+
+    private String generateRandomString(double numberOfLetters) {
+        int leftLimit = 97;
+        int rightLimit = 122;
+        int targetStringLength = (int) numberOfLetters;
+        Random random = new Random();
+        StringBuilder buffer = new StringBuilder(targetStringLength);
+        for (int i = 0; i < targetStringLength; i++) {
+            int randomLimitedInt = leftLimit + (int)
+                    (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        return buffer.toString();
+    }
+
+    @FXML
+    public void generateInput() {
+        input.setText(generateRandomString(generatorSlider.getValue()));
     }
 }
