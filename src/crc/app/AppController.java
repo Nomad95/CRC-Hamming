@@ -1,15 +1,5 @@
 package app;
 
-import java.net.URL;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.ResourceBundle;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
-
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -20,6 +10,16 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+
+import java.net.URL;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 public class AppController implements Initializable {
 
@@ -64,7 +64,7 @@ public class AppController implements Initializable {
                     System.out.println("Value is: " + crcType);
                 });
         comboError.getSelectionModel().selectedItemProperty()
-                .addListener((ChangeListener<String>) (observable, oldValue, newValue) -> hammingTest(newValue));
+                  .addListener((ChangeListener<String>) (observable, oldValue, newValue) -> hammingTest(newValue));
     }
 
     @FXML
@@ -196,13 +196,13 @@ public class AppController implements Initializable {
 
         createErrorComboOfEncodedLengthAndSetErrorsToZero(encoded.length);
 
-        hamming.fix();
+        hamming.fixCorruptedBitString();
         int[] decoded = hamming.decode();
 
         displayTextBeforeHamming(decoded);//?
 
-        if (hamming.getPossition() != 0) {
-            System.out.println("Znaleziono i poprawiono blad na pozycji: " + hamming.getPossition());
+        if (hamming.getErrorPosition() != 0) {
+            System.out.println("Znaleziono i poprawiono blad na pozycji: " + hamming.getErrorPosition());
         } else {
             System.out.println("Algorytm hamminga nie odnalazl bledow");
         }
@@ -231,11 +231,11 @@ public class AppController implements Initializable {
     private void hammingTest(String errors) {
         hamming.setData(oryginalData);
         hamming.encode();
-        hamming.interfere(Integer.parseInt(errors));
+        hamming.interfereCodeWithRandomErrors(Integer.parseInt(errors));
         int[] code = hamming.decode();
 
         byte[] bytesBefore = Arrays.copyOfRange(hammingToBytes(code), 0, hammingToBytes(code).length - (8 - cutBytes));
-        hamming.fix();
+        hamming.fixCorruptedBitString();
         int[] fixed = hamming.decode();
         byte[] bytesAfter = Arrays.copyOfRange(hammingToBytes(fixed), 0, hammingToBytes(fixed).length - (8 - cutBytes));
         byte[] bytesAfterWithChecksum = hammingToBytes(fixed);
@@ -243,11 +243,11 @@ public class AppController implements Initializable {
         labelBefore.setText(new String(bytesBefore));
         labelAfter.setText(new String(bytesAfter));
 
-        if (hamming.getPossition() == 0) {
+        if (hamming.getErrorPosition() == 0) {
             errorPoss.setText("nie wykrył błędów");
         } else {
-            errorPoss.setText("Wykrył i poprawił błąd na pozycji: " + hamming.getPossition());
-            hamming.resetPossition();
+            errorPoss.setText("Wykrył i poprawił błąd na pozycji: " + hamming.getErrorPosition());
+            hamming.resetErrorPosition();
         }
 
         crcTest(bytesAfterWithChecksum);

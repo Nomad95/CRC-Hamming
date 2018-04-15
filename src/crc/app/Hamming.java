@@ -16,7 +16,7 @@ public class Hamming extends CodeBase {
         }
 
         code = new int[sum];
-        type = new int[sum];
+        bitTypes = new int[sum];
 
         long mask = 0;
         redundancy = 0;
@@ -75,7 +75,7 @@ public class Hamming extends CodeBase {
     }
 
     @Override
-    void fix() {
+    void fixCorruptedBitString() {
         int n = code.length;
         int d = 0;
         int nadmiar = 0;
@@ -99,9 +99,9 @@ public class Hamming extends CodeBase {
             if (Math.pow(2, nadmiar) - 1 != i)        // bit danych
             {
                 d++;
-                type[i] = 0;            // poprawny (jak na razie) bit danych
+                bitTypes[i] = 0;            // poprawny (jak na razie) bit danych
             } else {
-                type[i] = 3;                // poprawny (jak na razie) bit redundantny
+                bitTypes[i] = 3;                // poprawny (jak na razie) bit redundantny
                 nadmiar++;
             }
         }
@@ -111,11 +111,11 @@ public class Hamming extends CodeBase {
             errors++;
             int numer = maska - 1;            // numeracja bitów od 1, tablicy - od 0
 
-            possition = numer;
+            errorPosition = numer;
 
             if (numer < code.length) {
-                if (type[numer] == 0) type[numer] = 1;    // korygujemy bit danych
-                else if (type[numer] == 3) type[numer] = 4;    // korygujemy bit redundantny
+                if (bitTypes[numer] == 0) bitTypes[numer] = 1;    // korygujemy bit danych
+                else if (bitTypes[numer] == 3) bitTypes[numer] = 4;    // korygujemy bit redundantny
 
                 if (code[numer] == 1) code[numer] = 0;
                 else code[numer] = 1;
