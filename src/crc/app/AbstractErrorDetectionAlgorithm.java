@@ -25,9 +25,9 @@ abstract class AbstractErrorDetectionAlgorithm {
 //    }
 
     public void setData(String str) {
-        int n = str.length();
-        data = new int[n];
-        for (int i = 0; i < n; i++) {
+        int bitStringLength = str.length();
+        data = new int[bitStringLength];
+        for (int i = 0; i < bitStringLength; i++) {
             if (str.charAt(i) == '1') {
                 data[i] = 1;
             } else {
@@ -95,7 +95,7 @@ abstract class AbstractErrorDetectionAlgorithm {
         if (numberOfErrors > codeLength) {
             numberOfErrors = codeLength;
         }
-        int corruptedBits = 0; // zakłócone
+        int corruptedBits = 0;
         clearBitTypesArray(codeLength);
 
         while (corruptedBits < numberOfErrors) {
