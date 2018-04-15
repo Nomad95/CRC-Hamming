@@ -44,8 +44,10 @@
         <Label text="Dane binarnie z dołączoną sumą kontrolną: " GridPane.rowIndex="1" />
         <Label fx:id="checksumTextfield" text="-" GridPane.columnIndex="1" />
         <Label fx:id="dataAndChecksumLabel" prefHeight="43.0" prefWidth="1038.9999000000025" text="-" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.rowSpan="4" GridPane.valignment="TOP" />
-        <Label prefHeight="25.0" prefWidth="192.0" text="Wybierz ilość losowych  błędów: " GridPane.rowIndex="5" />
+        <Label prefHeight="25.0" prefWidth="192.0" text="Wybierz ilość losowych  błędów: " GridPane.columnIndex="0" GridPane.rowIndex="5" />
         <ComboBox fx:id="comboError" prefHeight="25.0" prefWidth="140.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
+        <Label text="Dane po wprowadzeniu błędów" GridPane.columnIndex="0" GridPane.rowIndex="6" />
+        <Label fx:id="dataWithErrors" text="-" GridPane.columnIndex="1" GridPane.rowIndex="6" />
       </children>
       <columnConstraints>
         <ColumnConstraints hgrow="SOMETIMES" maxWidth="+Infinity" minWidth="10.0" prefWidth="241.0" />
@@ -56,11 +58,12 @@
         <RowConstraints maxHeight="89.0" minHeight="6.0" prefHeight="47.0" vgrow="SOMETIMES" />
         <RowConstraints maxHeight="83.0" minHeight="0.0" prefHeight="18.0" vgrow="SOMETIMES" />
         <RowConstraints maxHeight="83.0" minHeight="10.0" prefHeight="33.0" vgrow="SOMETIMES" />
+        <RowConstraints maxHeight="83.0" minHeight="10.0" prefHeight="33.0" vgrow="SOMETIMES" />
         <RowConstraints maxHeight="83.0" minHeight="10.0" prefHeight="34.0" vgrow="SOMETIMES" />
         <RowConstraints maxHeight="83.0" minHeight="10.0" prefHeight="34.0" vgrow="SOMETIMES" />
       </rowConstraints>
     </GridPane>
-    <GridPane layoutX="48.0" layoutY="341.0" prefHeight="167.0" prefWidth="593.0">
+    <GridPane layoutX="40.0" layoutY="418.0" prefHeight="167.0" prefWidth="593.0">
       <children>
         <Label prefHeight="17.0" prefWidth="142.0" text="Tekst przed korektą: " GridPane.rowIndex="1" />
         <Label text="Tekst po korekcie: " GridPane.rowIndex="2" />

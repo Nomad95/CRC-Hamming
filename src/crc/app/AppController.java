@@ -3,6 +3,7 @@ package app;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
 
@@ -42,6 +43,8 @@ public class AppController implements Initializable {
     private Label errorPoss;
     @FXML
     private Slider generatorSlider;
+    @FXML
+    private Label dataWithErrors;
 
     private String crcType;
     private Hamming hamming;
@@ -120,14 +123,6 @@ public class AppController implements Initializable {
 
         checksum.reset();
         checksum.update(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes));
-
-        byte[] checksumSent = getSentChecksum(dataAndChecksum);
-        Long checksum32Valuenew = checksum.getValue();
-        String message = new String(Arrays.copyOfRange(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes)));
-
-        System.out.println("Dziadostwo wyslane: " + fromByteArray(checksumSent));
-        System.out.println("Dziadostwo: " + checksum32Valuenew);
-        System.out.println("Przekazana wiadomosc: " + message);
     }
 
     private byte[] getSentChecksum(byte[] dataAndChecksum) {
@@ -228,10 +223,12 @@ public class AppController implements Initializable {
         hamming.encode();
         hamming.interfereCodeWithRandomErrors(Integer.parseInt(errors));
         int[] code = hamming.decode();
+        dataWithErrors.setText(Arrays.stream(code).mapToObj(String::valueOf).collect(Collectors.joining("")));
 
         byte[] bytesBefore = Arrays.copyOfRange(hammingToBytes(code), 0, hammingToBytes(code).length - (8 - cutBytes));
         hamming.fixCorruptedBitString();
         int[] fixed = hamming.decode();
+
         byte[] bytesAfter = Arrays.copyOfRange(hammingToBytes(fixed), 0, hammingToBytes(fixed).length - (8 - cutBytes));
         byte[] bytesAfterWithChecksum = hammingToBytes(fixed);
 
@@ -239,9 +236,9 @@ public class AppController implements Initializable {
         labelAfter.setText(new String(bytesAfter));
 
         if (hamming.getErrorPosition() == 0) {
-            errorPoss.setText("nie wykrył błędów");
+            errorPoss.setText("Nie wykryto błędów");
         } else {
-            errorPoss.setText("Wykrył i poprawił błąd na pozycji: " + hamming.getErrorPosition());
+            errorPoss.setText("Wykryto i poprawiono błąd na pozycji: " + hamming.getErrorPosition());
             hamming.resetErrorPosition();
         }
 
@@ -255,7 +252,6 @@ public class AppController implements Initializable {
         byte checksumSent[] = Arrays.copyOfRange(toTest, toTest.length - (8 - cutBytes), toTest.length);
         Long checksumValueOld = fromByteArray(checksumSent);
         Long checksumValueNew = checksum.getValue();
-        String message = new String(Arrays.copyOfRange(toTest, 0, toTest.length - (8 - cutBytes)));
 
         checksumReceived.setText(checksumValueOld.toString());
         checksumGenerated.setText(checksumValueNew.toString());
@@ -263,6 +259,8 @@ public class AppController implements Initializable {
             isEqual.setText("Tak");
         else
             isEqual.setText("Nie");
+
+
 
     }
 
