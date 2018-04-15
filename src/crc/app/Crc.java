@@ -16,10 +16,9 @@ public class Crc extends Application {
         
         Scene scene = new Scene(root, 640, 480);
         
-        primaryStage.setTitle("Hello World!");
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
-        primaryStage.setTitle("CRC + Huffman");
+        primaryStage.setTitle("CRC i Hamming");
         primaryStage.show();
     }
 

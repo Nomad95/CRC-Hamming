@@ -3,40 +3,44 @@ package app;
 public class Hamming extends CodeBase {
     @Override
     int[] encode() {
-        int n = data.length;
-        int i = 0, nadmiar = 0, suma = 0;
-        while (i < n)                        // liczenie długości kodu
-        {
-            if (Math.pow(2, nadmiar) - 1 == suma) nadmiar++;    // potęga 2 - bit redundantny
-            else i++;                    // bit danych
-            suma++;
-        }
-        code = new int[suma];
-        type = new int[suma];
+        int dataLength = data.length;
+        int i = 0, redundancy = 0, sum = 0;
 
-        long maska = 0;
-        nadmiar = 0;
-        int d = 0;
+        while (i < dataLength) { // liczenie długości kodu
+            if (Math.pow(2, redundancy) - 1 == sum)
+                redundancy++;    // potęga 2 - bit redundantny
+            else
+                i++;// bit danych
+
+            sum++;
+        }
+
+        code = new int[sum];
+        type = new int[sum];
+
+        long mask = 0;
+        redundancy = 0;
         i = 0;
-        suma = 0;
-        while (i < n)                        // przepisz dane i wylicz bity kontrolne
-        {
-            if (Math.pow(2, nadmiar) - 1 == suma) nadmiar++;
+        sum = 0;
+        while (i < dataLength) { // przepisz dane i wylicz bity kontrolne
+            if (Math.pow(2, redundancy) - 1 == sum) redundancy++;
             else {
-                code[suma] = data[i];
-                if (data[i] == 1) maska ^= suma + 1;
+                code[sum] = data[i];
+                if (data[i] == 1)
+                    mask ^= sum + 1;
                 i++;
             }
-            suma++;
+            sum++;
         }
 
-        nadmiar = 0;        // tutaj nadmiar pełni też rolę numeru bitu w masce
-        for (i = 0; i < suma; i++)    // zapisz bity kontrolne
-        {
-            if (Math.pow(2, nadmiar) - 1 == i) {
-                if ((maska & ((long) 1 << nadmiar)) == 0) code[i] = 0;
-                else code[i] = 1;
-                nadmiar++;
+        redundancy = 0;        // tutaj nadmiar pełni też rolę numeru bitu w masce
+        for (i = 0; i < sum; i++) {    // zapisz bity kontrolne
+            if (Math.pow(2, redundancy) - 1 == i) {
+                if ((mask & ((long) 1 << redundancy)) == 0)
+                    code[i] = 0;
+                else
+                    code[i] = 1;
+                redundancy++;
             }
         }
 

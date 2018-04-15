@@ -56,8 +56,8 @@
          <children>
                 <Label layoutX="49.0" layoutY="115.0" text="Suma kontrolna: " />
             <Label layoutX="49.0" layoutY="132.0" text="Dane + suma kontrolna : " GridPane.rowIndex="1" />
-            <Label fx:id="chsmTextfield" layoutX="157.0" layoutY="115.0" text="-" GridPane.columnIndex="1" />
-            <Label fx:id="dacLabel" prefWidth="1124.0" text="-" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.rowSpan="4" GridPane.valignment="TOP" />
+            <Label fx:id="checksumTextfield" layoutX="157.0" layoutY="115.0" text="-" GridPane.columnIndex="1" />
+            <Label fx:id="dataAndChecksumLabel" prefWidth="1124.0" text="-" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="1" GridPane.rowSpan="4" GridPane.valignment="TOP" />
             <Label text="Ilość błędów: " GridPane.rowIndex="5" />
             <ComboBox fx:id="comboError" prefHeight="25.0" prefWidth="140.0" GridPane.columnIndex="1" GridPane.rowIndex="5" />
          </children>

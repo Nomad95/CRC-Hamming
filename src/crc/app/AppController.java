@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package app;
 
 import java.net.URL;
@@ -14,8 +9,8 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.zip.CRC32;
 import java.util.zip.Checksum;
+
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -26,11 +21,6 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-/**
- * FXML Controller class
- *
- * @author Bolek
- */
 public class AppController implements Initializable {
 
     @FXML
@@ -40,9 +30,9 @@ public class AppController implements Initializable {
     @FXML
     private ComboBox comboCRC;
     @FXML
-    private Label chsmTextfield;
+    private Label checksumTextfield;
     @FXML
-    private Label dacLabel;
+    private Label dataAndChecksumLabel;
     @FXML
     private Label labelBefore;
     @FXML
@@ -61,57 +51,33 @@ public class AppController implements Initializable {
     private String crcType;
     private Hamming hamming;
     private String oryginalData;
-    private int cutBytes = 0;;
+    private int cutBytes = 0;
     Checksum checksum;
 
+    @SuppressWarnings("unchecked")
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         crcType = comboCRC.getValue().toString();
         comboCRC.getSelectionModel().selectedItemProperty()
-                .addListener(new ChangeListener<String>() {
-                    public void changed(ObservableValue<? extends String> observable,
-                            String oldValue, String newValue) {
-                        crcType = newValue;
-                        System.out.println("Value is: " + crcType);
-                    }
+                .addListener((ChangeListener<String>) (observable, oldValue, newValue) -> {
+                    crcType = newValue;
+                    System.out.println("Value is: " + crcType);
                 });
         comboError.getSelectionModel().selectedItemProperty()
-                .addListener(new ChangeListener<String>() {
-                    public void changed(ObservableValue<? extends String> observable,
-                            String oldValue, String newValue) {
-                        hammingTest(newValue);
-                    }
-                });
+                .addListener((ChangeListener<String>) (observable, oldValue, newValue) -> hammingTest(newValue));
     }
 
     @FXML
     private void handleCountAction(ActionEvent event) {
-        
-        // MPEG2
-        //int polynomial32 = 0x04C11DB7;
         String ipt = input.getText();
-        if(ipt.length() < 10){
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);  
-                    alert.setTitle("Błąd danych wejściowych");
-                    alert.setHeaderText("Za krótki ciąg wejściowy!");
-                    alert.setContentText("Wprowadzany ciąg musi mieć długośc conajmniej 10 znaków!");
-                    alert.showAndWait();
-        }else
+        if (ipt.length() < 10) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Błąd danych wejściowych");
+            alert.setHeaderText("Za krótki ciąg wejściowy!");
+            alert.setContentText("Wprowadzany ciąg musi mieć długośc conajmniej 10 znaków!");
+            alert.showAndWait();
+        } else
             countCrc(ipt);
-
-    }
-
-    private String toBinaryString(byte[] bytes) {
-        StringBuilder binary = new StringBuilder();
-        for (byte b : bytes) {
-            int val = b;
-            for (int i = 0; i < 8; i++) {
-                binary.append((val & 128) == 0 ? 0 : 1);
-                val <<= 1;
-            }
-            //binary.append(' ');
-        }
-        return binary.toString();
     }
 
     private byte[] addArrays(byte[] one, byte[] two) {
@@ -146,19 +112,34 @@ public class AppController implements Initializable {
         return buffer.array();
     }
 
-    public static long bytesToLong(byte[] b) {
-        long result = 0;
-        for (int i = 0; i < 8; i++) {
-            result <<= 8;
-            result |= (b[i] & 0xFF);
-        }
-        return result;
+    private void countCrc(String input) {
+        byte inputBytes[] = input.getBytes();
+        selectCRCType();
+        Long checksumValue = getChecksumValueFromInput(inputBytes);
+        displayChecksumAsBytesAndDecimal(checksumValue);
+        byte[] checksumBytes = getChecksumBytes(checksumValue);
+        byte[] dataAndChecksum = addChecksumBytesToTheEndOfInputBytes(inputBytes, checksumBytes);
+        displayDataAndChecksum(dataAndChecksum);
+
+        doHamming(dataAndChecksumLabel.getText());
+
+        checksum.reset();
+        checksum.update(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes));
+
+        byte[] checksumSent = getSentChecksum(dataAndChecksum);
+        Long checksum32Valuenew = checksum.getValue();
+        String message = new String(Arrays.copyOfRange(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes)));
+
+        System.out.println("Dziadostwo wyslane: " + fromByteArray(checksumSent));
+        System.out.println("Dziadostwo: " + checksum32Valuenew);
+        System.out.println("Przekazana wiadomosc: " + message);
     }
 
-    private void countCrc(String ipt) {
-        byte inputBytes[] = ipt.getBytes();
-        
-        //Checksum checksum = null;
+    private byte[] getSentChecksum(byte[] dataAndChecksum) {
+        return Arrays.copyOfRange(dataAndChecksum, dataAndChecksum.length - (8 - cutBytes), dataAndChecksum.length);
+    }
+
+    private void selectCRCType() {
         switch (crcType) {
             case "CRC32":
                 checksum = new CRC32();
@@ -173,28 +154,28 @@ public class AppController implements Initializable {
                 cutBytes = 7;
                 break;
         }
-        checksum.update(inputBytes, 0, inputBytes.length);
-        Long checksumValue = checksum.getValue();
+    }
 
-        chsmTextfield.setText(Long.toBinaryString(checksumValue) + "    [ " + checksumValue + "D ]");
-        byte checksumBytes[] = Arrays.copyOfRange(longToBytes(checksumValue), cutBytes, 8);
-
-        byte dataAndChecksum[] = addArrays(inputBytes, checksumBytes);
-
-        dacLabel.setText(stringFromByteArray(dataAndChecksum));
-
+    private void displayDataAndChecksum(byte[] dataAndChecksum) {
+        dataAndChecksumLabel.setText(stringFromByteArray(dataAndChecksum));
         System.out.println("checksum " + Arrays.toString(dataAndChecksum));
-        doHamming(dacLabel.getText());
-        checksum.reset();
+    }
 
-        checksum.update(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes));
-        byte checksumSent[] = Arrays.copyOfRange(dataAndChecksum, dataAndChecksum.length - (8 - cutBytes), dataAndChecksum.length);
-        Long checksum32Valuenew = checksum.getValue();
-        String message = new String(Arrays.copyOfRange(dataAndChecksum, 0, dataAndChecksum.length - (8 - cutBytes)));
+    private byte[] addChecksumBytesToTheEndOfInputBytes(byte[] inputBytes, byte[] checksumBytes) {
+        return addArrays(inputBytes, checksumBytes);
+    }
 
-        System.out.println("Dziadostwo wyslane: " + fromByteArray(checksumSent));
-        System.out.println("Dziadostwo: " + checksum32Valuenew);
-        System.out.println("Przekazana wiadomosc: " + message);
+    private byte[] getChecksumBytes(Long checksumValue) {
+        return Arrays.copyOfRange(longToBytes(checksumValue), cutBytes, 8);
+    }
+
+    private void displayChecksumAsBytesAndDecimal(Long checksumValue) {
+        checksumTextfield.setText(Long.toBinaryString(checksumValue) + "    [ " + checksumValue + " ]");
+    }
+
+    private Long getChecksumValueFromInput(byte[] inputBytes) {
+        checksum.update(inputBytes, 0, inputBytes.length);
+        return checksum.getValue();
     }
 
     private String stringFromByteArray(byte[] bytes) {
@@ -206,28 +187,19 @@ public class AppController implements Initializable {
     }
 
     private void doHamming(String data) {
-        System.out.println("Before ham: " + data);
+        System.out.println("Before hamming: " + data);
         hamming = new Hamming();
         hamming.setData(data);
         oryginalData = data;
 
         int[] encoded = hamming.encode();
 
-        List<String> list = new ArrayList<String>();
-        ObservableList<String> observableList = FXCollections.observableList(list);
-
-        for (int i = 0; i <= encoded.length; i++) {
-            observableList.add(Integer.toString(i));
-        }
-        comboError.setItems(observableList);
-        comboError.getSelectionModel().selectFirst();
+        createErrorComboOfEncodedLengthAndSetErrorsToZero(encoded.length);
 
         hamming.fix();
         int[] decoded = hamming.decode();
 
-        byte[] bytesBefore = Arrays.copyOfRange(hammingToBytes(decoded), 0, hammingToBytes(decoded).length - (8 - cutBytes));
-
-        labelBefore.setText(new String(bytesBefore));
+        displayTextBeforeHamming(decoded);//?
 
         if (hamming.getPossition() != 0) {
             System.out.println("Znaleziono i poprawiono blad na pozycji: " + hamming.getPossition());
@@ -237,10 +209,26 @@ public class AppController implements Initializable {
 
         System.out.println("Coded by ham: " + Arrays.toString(encoded));
         System.out.println("Decoded by ham: " + Arrays.toString(decoded));
-
         System.out.println("docoded checsum: " + Arrays.toString(hammingToBytes(decoded)));
     }
-    private void hammingTest(String errors){
+
+    private void displayTextBeforeHamming(int[] decoded) {
+        byte[] bytesBefore = Arrays.copyOfRange(hammingToBytes(decoded), 0, hammingToBytes(decoded).length - (8 - cutBytes));
+        labelBefore.setText(new String(bytesBefore));
+    }
+
+    private void createErrorComboOfEncodedLengthAndSetErrorsToZero(int encoded) {
+        List<String> list = new ArrayList<>();
+        ObservableList<String> observableList = FXCollections.observableList(list);
+
+        for (int i = 0; i <= encoded; i++) {
+            observableList.add(Integer.toString(i));
+        }
+        comboError.setItems(observableList);
+        comboError.getSelectionModel().selectFirst();
+    }
+
+    private void hammingTest(String errors) {
         hamming.setData(oryginalData);
         hamming.encode();
         hamming.interfere(Integer.parseInt(errors));
@@ -249,21 +237,23 @@ public class AppController implements Initializable {
         byte[] bytesBefore = Arrays.copyOfRange(hammingToBytes(code), 0, hammingToBytes(code).length - (8 - cutBytes));
         hamming.fix();
         int[] fixed = hamming.decode();
-        byte[] bytesAfter = Arrays.copyOfRange(hammingToBytes(fixed), 0, hammingToBytes(fixed).length - (8 - cutBytes)); 
+        byte[] bytesAfter = Arrays.copyOfRange(hammingToBytes(fixed), 0, hammingToBytes(fixed).length - (8 - cutBytes));
         byte[] bytesAfterWithChecksum = hammingToBytes(fixed);
+
         labelBefore.setText(new String(bytesBefore));
         labelAfter.setText(new String(bytesAfter));
+
         if (hamming.getPossition() == 0) {
             errorPoss.setText("nie wykrył błędów");
-        }else{
-            errorPoss.setText("Wykrył i poprawił błąd na pozycji: "+ hamming.getPossition());
+        } else {
+            errorPoss.setText("Wykrył i poprawił błąd na pozycji: " + hamming.getPossition());
             hamming.resetPossition();
         }
-        
-        
+
         crcTest(bytesAfterWithChecksum);
     }
-    private void crcTest(byte[] toTest){
+
+    private void crcTest(byte[] toTest) {
         checksum.reset();
 
         checksum.update(toTest, 0, toTest.length - (8 - cutBytes));
@@ -271,14 +261,14 @@ public class AppController implements Initializable {
         Long checksumValueOld = fromByteArray(checksumSent);
         Long checksumValueNew = checksum.getValue();
         String message = new String(Arrays.copyOfRange(toTest, 0, toTest.length - (8 - cutBytes)));
-        
+
         checksumReceived.setText(checksumValueOld.toString());
         checksumGenerated.setText(checksumValueNew.toString());
-        if(Objects.equals(checksumValueOld, checksumValueNew))
+        if (Objects.equals(checksumValueOld, checksumValueNew))
             isEqual.setText("Tak");
         else
             isEqual.setText("Nie");
-        
+
     }
 
     private byte[] hammingToBytes(int[] encoded) {
